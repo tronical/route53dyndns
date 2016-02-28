@@ -68,6 +68,22 @@ func findHostedZone(service route53iface.Route53API, domain string) (*string, er
 	return response.HostedZones[0].Id, nil
 }
 
+func findRecordSet(service route53iface.Route53API, zoneId *string, fqdn string) (*route53.ResourceRecordSet, error) {
+	input := &route53.ListResourceRecordSetsInput{
+		HostedZoneId: zoneId,
+	}
+	response, err := service.ListResourceRecordSets(input)
+	if err != nil {
+		return nil, err
+	}
+	for _, recordSet := range response.ResourceRecordSets {
+		if recordSet.Name != nil && *recordSet.Name == fqdn {
+			return recordSet, nil
+		}
+	}
+	return nil, nil
+}
+
 func updateRecordSet(service route53iface.Route53API, zoneId *string, name string, newIP string) error {
 	change := &route53.ChangeResourceRecordSetsInput{
 		HostedZoneId: zoneId,
@@ -113,6 +129,14 @@ func appMain() error {
 	zoneId, err := findHostedZone(svc, domain)
 	if err != nil {
 		return err
+	}
+
+	recordSet, err := findRecordSet(svc, zoneId, fqdn)
+	if err != nil {
+		return err
+	}
+	if recordSet != nil && len(recordSet.ResourceRecords) == 1 && *recordSet.ResourceRecords[0].Value == ip {
+		return nil
 	}
 
 	if err := updateRecordSet(svc, zoneId, fqdn, ip); err != nil {
