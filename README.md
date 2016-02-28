@@ -1,6 +1,9 @@
 # route53dydndns
 
-Yet another little tool to update a DNS record via Route53 for dynamic DNS purpose.
+Yet another little tool to update a DNS record via Route53 for dynamic DNS purpose. You can
+install it via
+
+    go get github.com/tronical/route53dyndns
 
 Call it with the host name as first parameter and the domain name as second, for example:
 
